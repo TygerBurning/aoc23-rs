@@ -6,7 +6,7 @@ enum Direction {
     East,
 }
 
-fn solve_a(s: &str) -> usize {
+fn solve_a(s: &str) -> (usize, Vec<(usize, usize)>) {
     let grid = s
         .lines()
         .map(|s| s.chars().collect())
@@ -45,10 +45,11 @@ fn solve_a(s: &str) -> usize {
     }
 
     let mut path_length = 0;
+    let mut path = vec![];
     while current != start {
         path_length += 1;
+        path.push(current.clone());
         let pipe = grid[current.1][current.0];
-        println!("Current pipe: {}", pipe);
         match pipe {
             '7' => {
                 if have_come_from == Direction::South {
@@ -106,16 +107,35 @@ fn solve_a(s: &str) -> usize {
         }
     }
 
-    (path_length + 1) / 2
+    ((path_length + 1) / 2, path)
 }
 
 fn solve_b(s: &str) -> usize {
-    0
+    let (_, path) = solve_a(s);
+
+    let grid = s
+        .lines()
+        .map(|s| s.chars().collect())
+        .collect::<Vec<Vec<char>>>();
+
+    let mut internal = 0;
+    for (j, row) in grid.iter().enumerate() {
+        let mut inside = false;
+        for (i, c) in row.iter().enumerate() {
+            if path.contains(&(i, j)) {
+                print!("X");
+            } else {
+                print!("{}", c);
+            }
+        }
+        println!();
+    }
+    internal
 }
 
 pub fn day10() {
     let input = include_str!("../inputs/day10.txt");
-    println!("Part A is: {}", solve_a(input));
+    println!("Part A is: {}", solve_a(input).0);
     println!("Part B is: {}", solve_b(input));
 }
 
@@ -128,7 +148,27 @@ fn example_a() {
 SJ.L7
 |F--J
 LJ..."#
-        ),
+        )
+        .0,
         8
     );
 }
+
+// #[test]
+// fn example_b() {
+//     assert_eq!(
+//         solve_b(
+//             r#".F----7F7F7F7F-7....
+// .|F--7||||||||FJ....
+// .||.FJ||||||||L7....
+// FJL7L7LJLJ||LJ.L-7..
+// L--J.L7...LJS7F-7L7.
+// ....F-J..F7FJ|L7L7L7
+// ....L7.F7||L7|.L7L7|
+// .....|FJLJ|FJ|F7|.LJ
+// ....FJL-7.||.||||...
+// ....L---J.LJ.LJLJ..."#
+//         ),
+//         8
+//     );
+// }
