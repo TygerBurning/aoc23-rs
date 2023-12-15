@@ -1,6 +1,40 @@
-use std::{collections::HashMap, ops::Index};
+use std::{collections::HashMap};
 
 use regex::Regex;
+
+fn solve_a(start: &str, graph: &HashMap<String, (String, String)>, directions: &Vec<char>) -> usize {
+    let mut steps = 0;
+    let mut current = start;
+    while !reached_end(current) {
+        let d = directions[steps % directions.len()];
+        match d {
+            'L' => current = &graph[current].0,
+            'R' => current = &graph[current].1,
+            _ => panic!("What the deuce"),
+        }
+        steps += 1;
+    }
+    steps
+}
+
+fn reached_end(v: &str) -> bool {
+    v.chars().nth(2).unwrap() == 'Z'
+}
+
+fn solve_b(graph: &HashMap<String, (String, String)>, directions: &Vec<char>) -> usize {
+    let mut start_nodes = graph
+        .clone()
+        .into_keys()
+        .filter(|p| p.chars().nth(2).unwrap() == 'A');
+
+    // This is cheating. I should really be doing cycle detection, but I heard a rumour this works, and hey, it does.
+    let mut lcm = 1;
+    for node in start_nodes {
+        let steps = solve_a(&node, &graph, &directions);
+        lcm = num::integer::lcm(lcm, steps);
+    }
+    lcm
+}
 
 pub fn day08() {
     let input = include_str!("../inputs/day08.txt");
@@ -17,58 +51,6 @@ pub fn day08() {
         graph.insert(r[1].to_string(), (r[2].to_string(), r[3].to_string()));
     }
 
-    {
-    // let mut node = "AAA".to_string();
-    // let mut steps = 0;
-    // while node != "ZZZ" {
-    //     let d = directions[steps % directions.len()];
-    //     match d {
-    //         'L' => node = graph[&node].0.clone(),
-    //         'R' => node = graph[&node].1.clone(),
-    //         _ => panic!("What the deuce"),
-    //     }
-    //     steps += 1;
-    // }
-
-    // println!("Part A is: {}", steps);
-    }
-
-    let mut nodes = graph
-        .clone()
-        .into_keys()
-        .filter(|p| p.chars().nth(2).unwrap() == 'A')
-        .collect::<Vec<String>>();
-    let mut steps = 0;
-    while !reached_end(&nodes) {
-        let d = directions[steps % directions.len()];
-        let mut new_nodes = vec![];
-        for node in nodes {
-            match d {
-                'L' => {
-                    new_nodes.push(graph[&node].0.clone());
-                    // println!(
-                    //     "Node: {} went left and is now: {}",
-                    //     node,
-                    //     graph[&node].0.clone()
-                    // )
-                }
-                'R' => {
-                    new_nodes.push(graph[&node].1.clone());
-                    // println!(
-                    //     "Node: {} went right and is now: {}",
-                    //     node,
-                    //     graph[&node].0.clone()
-                    // )
-                }
-                _ => panic!("What the deuce"),
-            }
-        }
-        nodes = new_nodes;
-        steps += 1;
-    }
-    println!("Part B is: {}", steps);
-}
-
-fn reached_end(v: &Vec<String>) -> bool {
-    v.iter().all(|p| p.chars().nth(2).unwrap() == 'Z')
+    println!("Part A is: {}", solve_a("AAA", &graph, &directions));
+    println!("Part B is: {}", solve_b(&graph, &directions));
 }

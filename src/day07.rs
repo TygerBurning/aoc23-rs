@@ -23,6 +23,7 @@ enum Card {
     Ace = 14,
 }
 
+#[derive(Clone)]
 struct Player {
     hand: Vec<Card>,
     bid: usize,
@@ -96,8 +97,13 @@ fn determine_camel_card_type_with_joker(hand: &Vec<Card>) -> CamelCardTypes {
     for c in hand {
         *hs.entry(c.clone()).or_default() += 1;
     }
-    
-    let max_seen = hs.iter().filter(|(c, i)| c != &&Card::Jack).map(|(_, i)| i).max().unwrap_or(&0);
+
+    let max_seen = hs
+        .iter()
+        .filter(|(c, i)| c != &&Card::Jack)
+        .map(|(_, i)| i)
+        .max()
+        .unwrap_or(&0);
     let num_jokers = hand.iter().filter(|c| c == &&Card::Jack).count();
 
     match max_seen {
@@ -116,16 +122,15 @@ fn determine_camel_card_type_with_joker(hand: &Vec<Card>) -> CamelCardTypes {
             3 => CamelCardTypes::FourOfAKind,
             4 => CamelCardTypes::FiveOfAKind,
             _ => panic!("Ahh, {:?}", hand),
-        }
+        },
         2 => match num_jokers {
             0 => {
                 // One pair or two pair.
                 if hs.len() == 3 {
                     // This must be 2 + 2 + 1
-                    return CamelCardTypes::TwoPair
-                }
-                else {
-                    return CamelCardTypes::OnePair
+                    return CamelCardTypes::TwoPair;
+                } else {
+                    return CamelCardTypes::OnePair;
                 }
             }
             1 => CamelCardTypes::ThreeOfAKind,
@@ -137,20 +142,19 @@ fn determine_camel_card_type_with_joker(hand: &Vec<Card>) -> CamelCardTypes {
             0 => {
                 if hs.len() == 2 {
                     // This must be a 3 + 2
-                    return CamelCardTypes::FullHouse
+                    return CamelCardTypes::FullHouse;
+                } else {
+                    return CamelCardTypes::ThreeOfAKind;
                 }
-                else {
-                    return CamelCardTypes::ThreeOfAKind
-                }
-            }                
+            }
             1 => CamelCardTypes::FourOfAKind,
             2 => CamelCardTypes::FiveOfAKind,
             _ => panic!("Ahh, {:?}", hand),
         },
         4 => match num_jokers {
-                0 => CamelCardTypes::FourOfAKind,
-                1 => CamelCardTypes::FiveOfAKind,
-                _ => panic!("Ahh, {:?}", hand),
+            0 => CamelCardTypes::FourOfAKind,
+            1 => CamelCardTypes::FiveOfAKind,
+            _ => panic!("Ahh, {:?}", hand),
         },
         5 => CamelCardTypes::FiveOfAKind,
         _ => panic!("Impossible for hand: {:?}", hand),
@@ -158,6 +162,24 @@ fn determine_camel_card_type_with_joker(hand: &Vec<Card>) -> CamelCardTypes {
 }
 
 fn compare_hands(a: &Vec<Card>, b: &Vec<Card>) -> Ordering {
+    let a_type = determine_camel_card_type(a);
+    let b_type = determine_camel_card_type(b);
+    if a_type == b_type {
+        if a < b {
+            return Ordering::Greater;
+        } else {
+            return Ordering::Less;
+        }
+    } else {
+        if a_type < b_type {
+            return Ordering::Greater;
+        } else {
+            return Ordering::Less;
+        }
+    }
+}
+
+fn compare_hands_with_joker(a: &Vec<Card>, b: &Vec<Card>) -> Ordering {
     let a_type = determine_camel_card_type_with_joker(a);
     let b_type = determine_camel_card_type_with_joker(b);
     if a_type == b_type {
@@ -175,8 +197,37 @@ fn compare_hands(a: &Vec<Card>, b: &Vec<Card>) -> Ordering {
     }
 }
 
-pub fn day07() {
-    let input = include_str!("../inputs/day07.txt");
+fn solve_a(players: &mut Vec<Player>) -> usize {
+    players.sort_by(|a, b| compare_hands(&a.hand, &b.hand));
+    let mut res = 0;
+    for (i, player) in players.iter().enumerate() {
+        res += player.bid * (players.len() - i);
+        // println!(
+        //     "Hand: {:?}, (classified as: {:?}) - res is now: {}",
+        //     player.hand,
+        //     determine_camel_card_type(&player.hand),
+        //     res
+        // );
+    }
+    res
+}
+
+fn solve_b(players: &mut Vec<Player>) -> usize {
+    players.sort_by(|a, b| compare_hands_with_joker(&a.hand, &b.hand));
+    let mut res = 0;
+    for (i, player) in players.iter().enumerate() {
+        res += player.bid * (players.len() - i);
+        println!(
+            "Hand: {:?}, (classified as: {:?}) - res is now: {}",
+            player.hand,
+            determine_camel_card_type_with_joker(&player.hand),
+            res
+        );
+    }
+    res
+}
+
+fn create_players(input: &str) -> Vec<Player> {
     let handbet = Regex::new(r"(.{5}) ([0-9]*)").unwrap();
 
     let mut players = vec![];
@@ -188,18 +239,29 @@ pub fn day07() {
         });
     }
     println!("There are: {} hands", players.len());
+    players
+}
 
-    players.sort_by(|a, b| compare_hands(&a.hand, &b.hand));
-    let mut res = 0;
-    for (i, player) in players.iter().enumerate() {
-        res += player.bid * (players.len() - i);
-        println!(
-            "Hand: {:?}, (classified as: {:?}) - res is now: {}",
-            player.hand,
-            determine_camel_card_type_with_joker(&player.hand),
-            res
-        );
-    }
+pub fn day07() {
+    let input = include_str!("../inputs/day07.txt");
+    let players = create_players(input);
 
-    println!("Part A is: {}", res);
+    println!("Part A is: {}", solve_a(&mut players.clone()));
+
+    // Not 249640985
+    println!("Part A is: {}", solve_b(&mut players.clone()));
+}
+
+#[test]
+fn example_b() {
+    assert_eq!(
+        solve_b(&mut create_players(
+            r#"32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483"#
+        )),
+        5905
+    );
 }
