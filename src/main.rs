@@ -4,7 +4,7 @@ mod lib;
 // mod day02;
 mod day03;
 mod day04;
-// mod day05;
+mod day05;
 mod day06;
 mod day07;
 mod day08;
@@ -19,7 +19,7 @@ mod day16;
 mod day17;
 // mod day18;
 mod day19;
-// mod day20;
+mod day20;
 // mod day21;
 // mod day22;
 // mod day23;
@@ -43,7 +43,7 @@ fn main() {
         // 2 => day02::day02(),
         3 => day03::day03(),
         4 => day04::day04(),
-        // 5 => day05::day05(),
+        5 => day05::day05(),
         6 => day06::day06(),
         7 => day07::day07(),
         8 => day08::day08(),
@@ -58,7 +58,7 @@ fn main() {
         17 => day17::day17(),
         // 18 => day18::day18(),
         19 => day19::day19(),
-        // 20 => day20::day20(),
+        20 => day20::day20(),
         // 21 => day21::day21(),
         // 22 => day22::day22(),
         // 23 => day23::day23(),
